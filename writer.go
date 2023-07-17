@@ -50,6 +50,17 @@ func (w *Writer) WriteHeader(code int) {
 	w.writeHeader(code)
 }
 
+func (w *Writer) WriteHeaderNow() {
+	w.WriteHeader(w.code)
+}
+
+func (w *Writer) Status() int {
+	if w.code == 0 || w.timeout {
+		return w.ResponseWriter.Status()
+	}
+	return w.code
+}
+
 func (w *Writer) writeHeader(code int) {
 	w.wroteHeaders = true
 	w.code = code
@@ -68,6 +79,8 @@ func (w *Writer) WriteString(s string) (int, error) {
 // FreeBuffer will release buffer pointer
 func (w *Writer) FreeBuffer() {
 	// if not reset body,old bytes will put in bufPool
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	w.body.Reset()
 	w.body = nil
 }
